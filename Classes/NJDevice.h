@@ -7,6 +7,7 @@
 //
 
 #import "NJInputPathElement.h"
+#import <IOKit/hid/IOHIDLib.h>
 
 @class NJInput;
 

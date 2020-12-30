@@ -5,6 +5,7 @@
 //  Created by Sam McCall on 5/05/09.
 //
 
+#import <Cocoa/Cocoa.h>
 #import "NJOutputViewController.h"
 
 #import "NJMapping.h"
@@ -18,6 +19,8 @@
 #import "NJOutputMouseButton.h"
 #import "NJOutputMouseMove.h"
 #import "NJOutputMouseScroll.h"
+#import "NSView+FirstResponder.h"
+#import "NSMenu+RepresentedObjectAccessors.h"
 
 typedef NS_ENUM(NSUInteger, NJOutputRow) {
     NJOutputRowNone,
@@ -64,7 +67,7 @@ typedef NS_ENUM(NSUInteger, NJOutputRow) {
     if (row != NJOutputRowMove) {
         self.mouseDirSelect.selectedSegment = -1;
         self.mouseSpeedSlider.doubleValue = self.mouseSpeedSlider.minValue;
-        self.setCheck.state = NSOffState;
+        self.setCheck.state = NSControlStateValueOff;
         [self.setCheck resignIfFirstResponder];
         [self.mouseDirSelect resignIfFirstResponder];
     } else {
@@ -83,7 +86,7 @@ typedef NS_ENUM(NSUInteger, NJOutputRow) {
     if (row != NJOutputRowScroll) {
         self.scrollDirSelect.selectedSegment = -1;
         self.scrollSpeedSlider.doubleValue = self.scrollSpeedSlider.minValue;
-        self.smoothCheck.state = NSOffState;
+        self.smoothCheck.state = NSControlStateValueOff;
         [self.scrollDirSelect resignIfFirstResponder];
         [self.scrollSpeedSlider resignIfFirstResponder];
         [self.smoothCheck resignIfFirstResponder];
@@ -158,7 +161,7 @@ typedef NS_ENUM(NSUInteger, NJOutputRow) {
 - (IBAction)scrollTypeChanged:(NSButton *)sender {
     [self.radioButtons selectCellAtRow:NJOutputRowScroll column:0];
     [sender.window makeFirstResponder:sender];
-    if (sender.state == NSOnState) {
+    if (sender.state == NSControlStateValueOn) {
         self.scrollSpeedSlider.doubleValue =
             self.scrollSpeedSlider.minValue
             + (self.scrollSpeedSlider.maxValue - self.scrollSpeedSlider.minValue) / 2;
@@ -193,19 +196,19 @@ typedef NS_ENUM(NSUInteger, NJOutputRow) {
             NJOutputMouseMove *mm = [[NJOutputMouseMove alloc] init];
             mm.axis = (int)self.mouseDirSelect.selectedSegment;
             mm.speed = self.mouseSpeedSlider.floatValue;
-            mm.set = self.setCheck.state == NSOnState;
+            mm.set = self.setCheck.state == NSControlStateValueOn;
             return mm;
         }
         case NJOutputRowButton: {
             NJOutputMouseButton *mb = [[NJOutputMouseButton alloc] init];
-            mb.button = (int)[self.mouseBtnSelect.cell tagForSegment:self.mouseBtnSelect.selectedSegment];
+            mb.button = (uint32_t)[self.mouseBtnSelect.cell tagForSegment:self.mouseBtnSelect.selectedSegment];
             return mb;
         }
         case NJOutputRowScroll: {
             NJOutputMouseScroll *ms = [[NJOutputMouseScroll alloc] init];
             ms.direction = (int)[self.scrollDirSelect.cell tagForSegment:self.scrollDirSelect.selectedSegment];
             ms.speed = self.scrollSpeedSlider.floatValue;
-            ms.smooth = self.smoothCheck.state == NSOnState;
+            ms.smooth = self.smoothCheck.state == NSControlStateValueOn;
             return ms;
         }
         default:
@@ -252,7 +255,7 @@ typedef NS_ENUM(NSUInteger, NJOutputRow) {
         }
         self.title.stringValue = inpFullName;
 		NSLog(@"load output for");
-		NSLog(inpFullName);
+        NSLog(@"%@", inpFullName);
     }
 
     if ([output isKindOfClass:NJOutputKeyPress.class]) {
@@ -270,7 +273,7 @@ typedef NS_ENUM(NSUInteger, NJOutputRow) {
         [self.radioButtons selectCellAtRow:NJOutputRowMove column:0];
         self.mouseDirSelect.selectedSegment = [(NJOutputMouseMove *)output axis];
         self.mouseSpeedSlider.floatValue = [(NJOutputMouseMove *)output speed];
-        self.setCheck.state = [(NJOutputMouseMove *)output set] ? NSOnState : NSOffState;
+        self.setCheck.state = [(NJOutputMouseMove *)output set] ? NSControlStateValueOn : NSControlStateValueOff;
     }
     else if ([output isKindOfClass:NJOutputMouseButton.class]) {
         [self.radioButtons selectCellAtRow:NJOutputRowButton column:0];
@@ -283,7 +286,7 @@ typedef NS_ENUM(NSUInteger, NJOutputRow) {
         BOOL smooth = [(NJOutputMouseScroll *)output smooth];
         [self.scrollDirSelect selectSegmentWithTag:direction];
         self.scrollSpeedSlider.floatValue = speed;
-        self.smoothCheck.state = smooth ? NSOnState : NSOffState;
+        self.smoothCheck.state = smooth ? NSControlStateValueOn : NSControlStateValueOff;
         self.scrollSpeedSlider.enabled = smooth;
     } else {
         [self.radioButtons selectCellAtRow:self.enabled ? 0 : -1 column:0];

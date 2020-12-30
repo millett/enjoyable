@@ -10,8 +10,12 @@
 #import "NJInput.h"
 #import "NJOutput.h"
 #import "NJEvents.h"
+#import "NSProcessInfo+Debugging.h"
+#import "NSRunningApplication+NJPossibleNames.h"
+#import "NSMutableArray+MoveObject.h"
 
 #import <CoreVideo/CoreVideo.h>
+#import <Cocoa/Cocoa.h>
 
 @interface NJInputController ()
 
@@ -181,9 +185,9 @@ static CVReturn _updateDL(CVDisplayLinkRef displayLink,
 - (void)HIDManager:(NJHIDManager *)manager deviceRemoved:(IOHIDDeviceRef)device {
     NJDevice *match = [self findDeviceByRef:device];
     if (match) {
-        NSInteger idx = [_devices indexOfObjectIdenticalTo:match];
+        NSUInteger idx = [_devices indexOfObjectIdenticalTo:match];
         [_devices removeObjectAtIndex:idx];
-        [self.delegate inputController:self didRemoveDeviceAtIndex:idx];
+        [self.delegate inputController:self didRemoveDeviceAtIndex:(NSInteger)idx];
     }
 }
 
@@ -303,7 +307,7 @@ static CVReturn _updateDL(CVDisplayLinkRef displayLink,
 - (void)activateMappingForcibly:(NJMapping *)mapping {
     NSLog(@"Switching to mapping %@.", mapping.name);
     _currentMapping = mapping;
-    NSUInteger idx = [self indexOfMapping:_currentMapping];
+    NSInteger idx = [self indexOfMapping:_currentMapping];
     [NSNotificationCenter.defaultCenter
         postNotificationName:NJEventMappingChanged
         object:self
@@ -334,7 +338,7 @@ static CVReturn _updateDL(CVDisplayLinkRef displayLink,
 }
 
 - (void)load {
-    NSUInteger selected = [NSUserDefaults.standardUserDefaults integerForKey:@"selected"];
+    NSUInteger selected = (NSUInteger)[NSUserDefaults.standardUserDefaults integerForKey:@"selected"];
     NSArray *storedMappings = [NSUserDefaults.standardUserDefaults arrayForKey:@"mappings"];
     NSMutableArray* newMappings = [[NSMutableArray alloc] initWithCapacity:storedMappings.count];
     
@@ -352,7 +356,7 @@ static CVReturn _updateDL(CVDisplayLinkRef displayLink,
 }
 
 - (NSInteger)indexOfMapping:(NJMapping *)mapping {
-    return [_mappings indexOfObjectIdenticalTo:mapping];
+    return (NSInteger)[_mappings indexOfObjectIdenticalTo:mapping];
 }
 
 - (void)mergeMapping:(NJMapping *)mapping intoMapping:(NJMapping *)existing {
@@ -370,24 +374,24 @@ static CVReturn _updateDL(CVDisplayLinkRef displayLink,
 }
 
 - (void)addMapping:(NJMapping *)mapping {
-    [self insertMapping:mapping atIndex:_mappings.count];
+    [self insertMapping:mapping atIndex:(NSInteger)_mappings.count];
 }
 
 - (void)insertMapping:(NJMapping *)mapping atIndex:(NSInteger)idx {
-    [_mappings insertObject:mapping atIndex:idx];
+    [_mappings insertObject:mapping atIndex:(NSUInteger)idx];
     [self mappingsChanged];
 }
 
 - (void)removeMappingAtIndex:(NSInteger)idx {
     NSInteger currentIdx = [self indexOfMapping:_currentMapping];
-    [_mappings removeObjectAtIndex:idx];
+    [_mappings removeObjectAtIndex:(NSUInteger)idx];
     NSInteger activeIdx = MIN(currentIdx, (NSInteger)_mappings.count - 1);
-    [self activateMapping:self.mappings[activeIdx]];
+    [self activateMapping:self.mappings[(NSUInteger)activeIdx]];
     [self mappingsChanged];
 }
 
 - (void)moveMoveMappingFromIndex:(NSInteger)fromIdx toIndex:(NSInteger)toIdx {
-    [_mappings moveObjectAtIndex:fromIdx toIndex:toIdx];
+    [_mappings moveObjectAtIndex:(NSUInteger)fromIdx toIndex:(NSUInteger)toIdx];
     [self mappingsChanged];
 }
 

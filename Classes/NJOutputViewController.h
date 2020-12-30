@@ -48,7 +48,7 @@
 @protocol NJOutputViewControllerDelegate
 
 - (NJMapping *)outputViewController:(NJOutputViewController *)ovc
-                    mappingForIndex:(NSUInteger)index;
+                    mappingForIndex:(NSInteger)index;
 - (void)outputViewController:(NJOutputViewController *)ovc
                    setOutput:(NJOutput *)output
                     forInput:(NJInput *)input;

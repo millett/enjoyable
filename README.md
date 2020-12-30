@@ -15,7 +15,7 @@ Enjoyable supports
  * Modern OS X features like resume and automatic termination
 
 Enjoyable is free software written by Joe Wreschnig with minor additions
-by Matt Millett and Sam Deane, and is based on the Enjoy codebase written by [Yifeng Huang](http://nongraphical.com)
+by Matt Millett, Sam Deane and Ruotger Deecke, and is based on the Enjoy codebase written by [Yifeng Huang](http://nongraphical.com)
 and [Sam McCall](http://abstractable.net/enjoy/).
 
 
@@ -24,6 +24,12 @@ and [Sam McCall](http://abstractable.net/enjoy/).
 2. Go to System Preferences -> Security & Privacy -> Accessibility, then click the (+) button, select the app (Enjoyable), and specifically allow permissions under "allow this app to control your computer".
 3. press buttons on your controller and see them light up the app. Set up your key mapping.
 4. press the little arrow in the top right corner and now, when you press buttons on your controller, it should act like you pressed those buttons on the computer!
+
+### New in 1.4
+
+- Support for Apple Silicon and Big Sur.
+- Enjoyable stays in light mode even if the system is in dark mode.
+- Unfortunately some older versions of macOS needed to be dropped. (is 10.13+ now)
 
 ### New in 1.3.1alpha
 Add functionality for any other random buttons/doohickeys on your controller. (Treats them as buttons)
@@ -53,12 +59,13 @@ manual available in Help Viewer via `⌘?`.
 
 ## Requirements
 
-* Mac OS X 10.7+
+* Mac OS X 10.13+
 * One or more HID-compatible (e.g. USB or Bluetooth) input devices
 
 ## License
 
-Copyright 2013 Joe Wreschnig  
+Copyright 2020 Matt Millet, Ruotger Deecke
+		  2013 Joe Wreschnig  
           2012 Yifeng Huang  
           2009 Sam McCall, University of Otago
 

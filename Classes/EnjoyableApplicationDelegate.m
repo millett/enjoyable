@@ -10,6 +10,7 @@
 #import "NJMapping.h"
 #import "NJInput.h"
 #import "NJEvents.h"
+#import "NSString+FixFilename.h"
 
 @implementation EnjoyableApplicationDelegate {
     NSStatusItem *statusItem;
@@ -46,15 +47,18 @@
       self.ic.currentMapping]];
 
     statusItem = [NSStatusBar.systemStatusBar statusItemWithLength:36];
-    statusItem.image = [NSImage imageNamed:@"Status Menu Icon Disabled"];
-    statusItem.highlightMode = YES;
+    statusItem.button.image = [NSImage imageNamed:@"Status Menu Icon Disabled"];
+    statusItem.button.highlighted = YES;
     statusItem.menu = self.statusItemMenu;
-    statusItem.target = self;
+    statusItem.button.target = self;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    // This is hopefully good enough.
+    BOOL wasLaunchedAtLogin = [notification.userInfo[NSApplicationLaunchIsDefaultLaunchKey] boolValue];
+    
     if ([NSUserDefaults.standardUserDefaults boolForKey:@"hidden in status item"]
-        && NSRunningApplication.currentApplication.wasLaunchedAsLoginItemOrResume)
+        && wasLaunchedAtLogin)
         [self transformIntoElement:nil];
     else
         [self.window makeKeyAndOrderFront:nil];
@@ -89,10 +93,10 @@
 }
 
 - (void)flashStatusItem {
-    if ([statusItem.image.name isEqualToString:@"Status Menu Icon"]) {
-        statusItem.image = [NSImage imageNamed:@"Status Menu Icon Disabled"];
+    if ([statusItem.button.image.name isEqualToString:@"Status Menu Icon"]) {
+        statusItem.button.image = [NSImage imageNamed:@"Status Menu Icon Disabled"];
     } else {
-        statusItem.image = [NSImage imageNamed:@"Status Menu Icon"];
+        statusItem.button.image = [NSImage imageNamed:@"Status Menu Icon"];
     }
     
 }
@@ -108,8 +112,8 @@
 }
 
 - (void)eventSimulationStarted:(NSNotification *)note {
-    self.simulatingEventsButton.state = NSOnState;
-    statusItem.image = [NSImage imageNamed:@"Status Menu Icon"];
+    self.simulatingEventsButton.state = NSControlStateValueOn;
+    statusItem.button.image = [NSImage imageNamed:@"Status Menu Icon"];
     [NSProcessInfo.processInfo
         disableAutomaticTermination:@"Event simulation running."];
     [NSWorkspace.sharedWorkspace.notificationCenter
@@ -120,8 +124,8 @@
 }
 
 - (void)eventSimulationStopped:(NSNotification *)note {
-    self.simulatingEventsButton.state = NSOffState;
-    statusItem.image = [NSImage imageNamed:@"Status Menu Icon Disabled"];
+    self.simulatingEventsButton.state = NSControlStateValueOff;
+    statusItem.button.image = [NSImage imageNamed:@"Status Menu Icon Disabled"];
     [NSProcessInfo.processInfo
         enableAutomaticTermination:@"Event simulation running."];
     [NSWorkspace.sharedWorkspace.notificationCenter
@@ -131,7 +135,7 @@
 }
 
 - (void)mappingDidChange:(NSNotification *)note {
-    NSUInteger idx = [note.userInfo[NJMappingIndexKey] intValue];
+    NSInteger idx = [note.userInfo[NJMappingIndexKey] integerValue];
     [self.mvc changedActiveMappingToIndex:idx];
 
     if (!self.window.isVisible)
@@ -179,13 +183,13 @@
     NJMapping *mapping = [NJMapping mappingWithContentsOfURL:URL
                                                        error:&error];
     if ([[self.ic mappingForKey:mapping.name] hasConflictWith:mapping]) {
-        [self promptForMapping:mapping atIndex:self.ic.mappings.count];
+        [self promptForMapping:mapping atIndex:(NSInteger)self.ic.mappings.count];
     } else if ([self.ic  mappingForKey:mapping.name]) {
         [[self.ic mappingForKey:mapping.name] mergeEntriesFrom:mapping];
     } else if (mapping) {
         [self.mvc beginUpdates];
         [self.ic addMapping:mapping];
-        [self.mvc addedMappingAtIndex:self.ic.mappings.count - 1 startEditing:NO];
+        [self.mvc addedMappingAtIndex:(NSInteger)self.ic.mappings.count - 1 startEditing:NO];
         [self.mvc endUpdates];
         [self.ic activateMapping:mapping];
     } else {
@@ -208,14 +212,14 @@
     panel.allowedFileTypes = @[ @"enjoyable", @"json", @"txt" ];
     [panel beginSheetModalForWindow:self.window
                   completionHandler:^(NSInteger result) {
-                      if (result != NSFileHandlingPanelOKButton)
+        if (result != NSModalResponseOK)
                           return;
                       [panel close];
                       NSError *error;
                       NJMapping *mapping = [NJMapping mappingWithContentsOfURL:panel.URL
                                                                          error:&error];
                       if ([[self.ic mappingForKey:mapping.name] hasConflictWith:mapping]) {
-                          [self promptForMapping:mapping atIndex:self.ic.mappings.count];
+                          [self promptForMapping:mapping atIndex:(NSInteger)self.ic.mappings.count];
                       } else if ([self.ic mappingForKey:mapping.name]) {
                           [[self.ic mappingForKey:mapping.name] mergeEntriesFrom:mapping];
                       } else if (mapping) {
@@ -234,7 +238,7 @@
     panel.nameFieldStringValue = [mapping.name stringByFixingPathComponent];
     [panel beginSheetModalForWindow:self.window
                   completionHandler:^(NSInteger result) {
-                      if (result != NSFileHandlingPanelOKButton)
+        if (result != NSModalResponseOK)
                           return;
                       [panel close];
                       NSError *error;
@@ -246,27 +250,23 @@
 
 - (void)mappingConflictDidResolve:(NSAlert *)alert
                        returnCode:(NSInteger)returnCode
-                      contextInfo:(void *)contextInfo {
-    NSDictionary *userInfo = CFBridgingRelease(contextInfo);
+                      contextInfo:(NSDictionary*)contextInfo {
+    NSDictionary *userInfo = contextInfo;
     NJMapping *oldMapping = userInfo[@"old mapping"];
     NJMapping *newMapping = userInfo[@"new mapping"];
     NSInteger idx = [userInfo[@"index"] intValue];
     [alert.window orderOut:nil];
-    switch (returnCode) {
-        case NSAlertFirstButtonReturn: // Merge
-            [self.ic mergeMapping:newMapping intoMapping:oldMapping];
-            [self.ic activateMapping:oldMapping];
-            break;
-        case NSAlertThirdButtonReturn: // New Mapping
-            [self.mvc beginUpdates];
-            [self.ic addMapping:newMapping];
-            [self.mvc addedMappingAtIndex:idx startEditing:YES];
-            [self.mvc endUpdates];
-            [self.ic activateMapping:newMapping];
-            break;
-        default: // Cancel, other.
-            break;
-    }
+    if (returnCode == NSAlertFirstButtonReturn) { // Merge
+        [self.ic mergeMapping:newMapping intoMapping:oldMapping];
+        [self.ic activateMapping:oldMapping];
+    } else if (returnCode == NSAlertThirdButtonReturn) { // New Mapping
+        [self.mvc beginUpdates];
+        [self.ic addMapping:newMapping];
+        [self.mvc addedMappingAtIndex:idx startEditing:YES];
+        [self.mvc endUpdates];
+        [self.ic activateMapping:newMapping];
+    } // Cancel, other.
+    
 }
 
 - (void)promptForMapping:(NJMapping *)mapping atIndex:(NSInteger)idx {
@@ -279,27 +279,28 @@
     [conflictAlert addButtonWithTitle:NSLocalizedString(@"import and merge", @"button to merge imported mappings")];
     [conflictAlert addButtonWithTitle:NSLocalizedString(@"cancel import", @"button to cancel import")];
     [conflictAlert addButtonWithTitle:NSLocalizedString(@"import new mapping", @"button to import as new mapping")];
-    [conflictAlert beginSheetModalForWindow:self.window
-                              modalDelegate:self
-                             didEndSelector:@selector(mappingConflictDidResolve:returnCode:contextInfo:)
-                                contextInfo:(void *)CFBridgingRetain(@{ @"index": @(idx),
-                                                                        @"old mapping": mergeInto,
-                                                                        @"new mapping": mapping })];
+    NSDictionary *contextInfo = @{ @"index": @(idx),
+                                   @"old mapping": mergeInto,
+                                   @"new mapping": mapping };
+    
+    [conflictAlert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
+        [self mappingConflictDidResolve:conflictAlert returnCode:returnCode contextInfo:contextInfo];
+    }];
 }
 
 - (NSInteger)numberOfMappings:(NJMappingsViewController *)mvc {
-    return self.ic.mappings.count;
+    return (NSInteger)self.ic.mappings.count;
 }
 
 - (NJMapping *)mappingsViewController:(NJMappingsViewController *)mvc
-                      mappingForIndex:(NSUInteger)idx {
-    return self.ic.mappings[idx];
+                      mappingForIndex:(NSInteger)idx {
+    return self.ic.mappings[(NSUInteger)idx];
 }
 
 - (void)mappingsViewController:(NJMappingsViewController *)mvc
           renameMappingAtIndex:(NSInteger)index
                         toName:(NSString *)name {
-    [self.ic renameMapping:self.ic.mappings[index] to:name];
+    [self.ic renameMapping:self.ic.mappings[(NSUInteger)index] to:name];
 }
 
 - (BOOL)mappingsViewController:(NJMappingsViewController *)mvc
@@ -353,7 +354,7 @@
 - (void)mappingsViewController:(NJMappingsViewController *)mvc
                     addMapping:(NJMapping *)mapping {
     [mvc beginUpdates];
-    [mvc addedMappingAtIndex:self.ic.mappings.count startEditing:YES];
+    [mvc addedMappingAtIndex:(NSInteger)self.ic.mappings.count startEditing:YES];
     [self.ic addMapping:mapping];
     [mvc endUpdates];
     [self.ic activateMapping:mapping];
@@ -361,7 +362,7 @@
 
 - (void)mappingsViewController:(NJMappingsViewController *)mvc
            choseMappingAtIndex:(NSInteger)idx {
-    [self.ic activateMapping:self.ic.mappings[idx]];
+    [self.ic activateMapping:self.ic.mappings[(NSUInteger)idx]];
 }
 
 - (id)deviceViewController:(NJDeviceViewController *)dvc
@@ -400,7 +401,7 @@
 
 - (void)inputController:(NJInputController *)ic
  didRemoveDeviceAtIndex:(NSInteger)idx {
-    [self.dvc removedDeviceAtIndex:idx];
+    [self.dvc removedDeviceAtIndex:(NSUInteger)idx];
 }
 
 - (void)inputControllerDidStartHID:(NJInputController *)ic {
@@ -422,7 +423,7 @@
 }
 
 - (NSInteger)numberOfDevicesInDeviceList:(NJDeviceViewController *)dvc {
-    return self.ic.devices.count;
+    return (NSInteger)self.ic.devices.count;
 }
 
 - (NJDevice *)deviceViewController:(NJDeviceViewController *)dvc
@@ -431,7 +432,7 @@
 }
 
 - (IBAction)simulatingEventsChanged:(NSButton *)sender {
-    self.ic.simulatingEvents = sender.state == NSOnState;
+    self.ic.simulatingEvents = sender.state == NSControlStateValueOn;
 }
 
 - (void)outputViewController:(NJOutputViewController *)ovc
@@ -442,8 +443,8 @@
 }
 
 - (NJMapping *)outputViewController:(NJOutputViewController *)ovc
-                    mappingForIndex:(NSUInteger)index {
-    return self.ic.mappings[index];
+                    mappingForIndex:(NSInteger)index {
+    return self.ic.mappings[(NSUInteger)index];
 }
 
 @end

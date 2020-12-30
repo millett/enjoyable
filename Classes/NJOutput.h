@@ -6,6 +6,8 @@
 //  Copyright 2009 University of Otago. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
 @class NJInputController;
 
 @interface NJOutput : NSObject

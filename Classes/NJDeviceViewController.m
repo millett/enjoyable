@@ -6,9 +6,11 @@
 //
 //
 
+#import <Cocoa/Cocoa.h>
 #import "NJDeviceViewController.h"
 
 #import "NJInputPathElement.h"
+#import "NSOutlineView+ItemAccessors.h"
 
 @implementation NJDeviceViewController {
     NSMutableArray *_expanded;
@@ -81,7 +83,7 @@
     [self expandRecursive:item];
     NSInteger row = [self.inputsTree rowForItem:item];
     if (row >= 0) {
-        [self.inputsTree selectRowIndexes:[[NSIndexSet alloc] initWithIndex:row]
+        [self.inputsTree selectRowIndexes:[[NSIndexSet alloc] initWithIndex:(NSUInteger)row]
                       byExtendingSelection:NO];
         [self.inputsTree scrollRowToVisible:row];
     }
@@ -90,7 +92,7 @@
 - (NSInteger)outlineView:(NSOutlineView *)outlineView
   numberOfChildrenOfItem:(NJInputPathElement *)item {
     if (item)
-        return item.children.count;
+        return (NSInteger)item.children.count;
     else
         return [self.delegate numberOfDevicesInDeviceList:self];
 
@@ -105,9 +107,9 @@
             child:(NSInteger)index
            ofItem:(NJInputPathElement *)item {
     if (item)
-        return item.children[index];
+        return item.children[(NSUInteger)index];
     else
-        return [self.delegate deviceViewController:self deviceForIndex:index];
+        return [self.delegate deviceViewController:self deviceForIndex:(NSUInteger)index];
 }
 
 - (id)outlineView:(NSOutlineView *)outlineView

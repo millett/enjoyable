@@ -3,6 +3,7 @@
 //  Enjoyable
 //
 
+#import <Cocoa/Cocoa.h>
 #import "NJHIDManager.h"
 
 @class NJDevice;

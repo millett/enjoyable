@@ -9,6 +9,8 @@
 
 #import "NJInput.h"
 #import "NJOutput.h"
+#import "NSError+Description.h"
+
 
 @implementation NJMapping {
     NSMutableDictionary *_entries;

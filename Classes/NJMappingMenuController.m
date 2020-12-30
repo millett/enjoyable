@@ -62,7 +62,7 @@
         [self.menu removeItemAtIndex:self.firstMappingIndex];    
     
     int added = 0;
-    NSUInteger index = self.firstMappingIndex;
+    NSInteger index = self.firstMappingIndex;
     for (NJMapping *mapping in mappings) {
         NSString *keyEquiv = (++added < 10 && self.hasKeyEquivalents)
             ? @(added).stringValue

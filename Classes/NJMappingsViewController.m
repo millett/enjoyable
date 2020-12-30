@@ -6,9 +6,14 @@
 //
 //
 
+#import <Cocoa/Cocoa.h>
+
 #import "NJMappingsViewController.h"
 
 #import "NJMapping.h"
+#import "NSString+FixFilename.h"
+#import "NSFileManager+UniqueNames.h"
+
 
 #define PB_ROW @"com.yukkurigames.Enjoyable.MappingRow"
 
@@ -16,7 +21,7 @@
 @implementation NJMappingsViewController
 
 - (void)awakeFromNib {
-    [self.mappingList registerForDraggedTypes:@[PB_ROW, NSURLPboardType]];
+    [self.mappingList registerForDraggedTypes:@[PB_ROW, NSPasteboardTypeURL]];
     [self.mappingList setDraggingSourceOperationMask:NSDragOperationCopy forLocal:NO];
 }
 
@@ -37,7 +42,7 @@
                      moveMappingFromIndex:fromIdx
                                   toIndex:toIdx];
     [self.mappingList scrollRowToVisible:toIdx];
-    [self.mappingList selectRowIndexes:[[NSIndexSet alloc] initWithIndex:toIdx]
+    [self.mappingList selectRowIndexes:[[NSIndexSet alloc] initWithIndex:(NSUInteger)toIdx]
                   byExtendingSelection:NO];
 }
 
@@ -48,7 +53,7 @@
                      moveMappingFromIndex:fromIdx
                                   toIndex:toIdx];
     [self.mappingList scrollRowToVisible:toIdx];
-    [self.mappingList selectRowIndexes:[[NSIndexSet alloc] initWithIndex:toIdx]
+    [self.mappingList selectRowIndexes:[[NSIndexSet alloc] initWithIndex:(NSUInteger)toIdx]
                   byExtendingSelection:NO];
 }
 
@@ -56,15 +61,15 @@
     [self.mappingListPopover showRelativeToRect:self.mappingListTrigger.bounds
                                          ofView:self.mappingListTrigger
                                   preferredEdge:NSMinXEdge];
-    self.mappingListTrigger.state = NSOnState;
+    self.mappingListTrigger.state = NSControlStateValueOn;
 }
 
 - (void)popoverWillShow:(NSNotification *)notification {
-    self.mappingListTrigger.state = NSOnState;
+    self.mappingListTrigger.state = NSControlStateValueOn;
 }
 
 - (void)popoverWillClose:(NSNotification *)notification {
-    self.mappingListTrigger.state = NSOffState;
+    self.mappingListTrigger.state = NSControlStateValueOff;
 }
 
 - (void)beginUpdates {
@@ -78,7 +83,7 @@
 
 - (void)addedMappingAtIndex:(NSInteger)index startEditing:(BOOL)startEditing {
     [self.mappingList abortEditing];
-    [self.mappingList insertRowsAtIndexes:[[NSIndexSet alloc] initWithIndex:index]
+    [self.mappingList insertRowsAtIndexes:[[NSIndexSet alloc] initWithIndex:(NSUInteger)index]
                             withAnimation:startEditing ? 0 : NSTableViewAnimationSlideLeft];
     if (startEditing) {
         [self.mappingListTrigger performClick:self];
@@ -89,7 +94,7 @@
 
 - (void)removedMappingAtIndex:(NSInteger)index {
     [self.mappingList abortEditing];
-    [self.mappingList removeRowsAtIndexes:[[NSIndexSet alloc] initWithIndex:index]
+    [self.mappingList removeRowsAtIndexes:[[NSIndexSet alloc] initWithIndex:(NSUInteger)index]
                             withAnimation:NSTableViewAnimationEffectFade];
 }
 
@@ -103,7 +108,7 @@
     self.moveDown.enabled = [self.delegate mappingsViewController:self
                                           canMoveMappingFromIndex:index toIndex:index + 1];
     self.mappingListTrigger.title = mapping.name;
-    [self.mappingList selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+    [self.mappingList selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)index] byExtendingSelection:NO];
     [self.mappingList scrollRowToVisible:index];
     [NSUserDefaults.standardUserDefaults setInteger:index forKey:@"selected"];
    
@@ -147,7 +152,7 @@
                          moveMappingFromIndex:srcRow
                                       toIndex:row];
         return YES;
-    } else if ([pboard.types containsObject:NSURLPboardType]) {
+    } else if ([pboard.types containsObject:NSPasteboardTypeURL]) {
         NSURL *url = [NSURL URLFromPasteboard:pboard];
         NSError *error;
         if (![self.delegate mappingsViewController:self
@@ -172,7 +177,7 @@
     if ([pboard.types containsObject:PB_ROW]) {
         [tableView setDropRow:MAX(1, row) dropOperation:NSTableViewDropAbove];
         return NSDragOperationMove;
-    } else if ([pboard.types containsObject:NSURLPboardType]) {
+    } else if ([pboard.types containsObject:NSPasteboardTypeURL]) {
         NSURL *url = [NSURL URLFromPasteboard:pboard];
         if ([url.pathExtension isEqualToString:@"enjoyable"]) {
             [tableView setDropRow:MAX(1, row) dropOperation:NSTableViewDropAbove];
@@ -189,7 +194,7 @@
 namesOfPromisedFilesDroppedAtDestination:(NSURL *)dropDestination
 forDraggedRowsWithIndexes:(NSIndexSet *)indexSet {
     NJMapping *toSave = [self.delegate mappingsViewController:self
-                                              mappingForIndex:indexSet.firstIndex];
+                                              mappingForIndex:(NSInteger)indexSet.firstIndex];
     NSString *filename = [[toSave.name stringByFixingPathComponent]
                           stringByAppendingPathExtension:@"enjoyable"];
     NSURL *dst = [dropDestination URLByAppendingPathComponent:filename];
@@ -207,13 +212,13 @@ forDraggedRowsWithIndexes:(NSIndexSet *)indexSet {
 writeRowsWithIndexes:(NSIndexSet *)rowIndexes
      toPasteboard:(NSPasteboard *)pboard {
     if (rowIndexes.count == 1 && rowIndexes.firstIndex != 0) {
-        [pboard declareTypes:@[PB_ROW, NSFilesPromisePboardType] owner:nil];
+        [pboard declareTypes:@[PB_ROW, (NSString*)kPasteboardTypeFileURLPromise] owner:nil];
         [pboard setString:@(rowIndexes.firstIndex).stringValue forType:PB_ROW];
-        [pboard setPropertyList:@[@"enjoyable"] forType:NSFilesPromisePboardType];
+        [pboard setPropertyList:@[@"enjoyable"] forType:(NSString*)kPasteboardTypeFileURLPromise];
         return YES;
     } else if (rowIndexes.count == 1 && rowIndexes.firstIndex == 0) {
-        [pboard declareTypes:@[NSFilesPromisePboardType] owner:nil];
-        [pboard setPropertyList:@[@"enjoyable"] forType:NSFilesPromisePboardType];
+        [pboard declareTypes:@[(NSString*)kPasteboardTypeFileURLPromise] owner:nil];
+        [pboard setPropertyList:@[@"enjoyable"] forType:(NSString*)kPasteboardTypeFileURLPromise];
         return YES;
     } else {
         return NO;

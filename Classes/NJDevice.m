@@ -14,7 +14,7 @@
 
 static NSArray *InputsForElement(IOHIDDeviceRef device, id parent) {
     CFArrayRef elements = IOHIDDeviceCopyMatchingElements(device, NULL, kIOHIDOptionsTypeNone);
-    NSMutableArray *children = [NSMutableArray arrayWithCapacity:CFArrayGetCount(elements)];
+    NSMutableArray *children = [NSMutableArray arrayWithCapacity:(NSUInteger)CFArrayGetCount(elements)];
     
     int buttons = 0;
     int axes = 0;

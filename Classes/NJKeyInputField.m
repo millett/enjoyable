@@ -10,6 +10,8 @@
 #include <Carbon/Carbon.h>
     // Only used for kVK_... codes.
 
+#import "NSView+FirstResponder.h"
+
 enum {
     kVK_Insert = 0x72,
     kVK_Power = 0x7f,
@@ -30,7 +32,7 @@ const CGKeyCode NJKeyInputFieldEmpty = kVK_MAX;
 - (id)initWithFrame:(NSRect)frameRect {
     if ((self = [super initWithFrame:frameRect])) {
         field = [[NSTextField alloc] initWithFrame:self.bounds];
-        field.alignment = NSCenterTextAlignment;
+        field.alignment = NSTextAlignmentCenter;
         field.editable = NO;
         field.selectable = NO;
         field.delegate = self;
@@ -235,7 +237,7 @@ const CGKeyCode NJKeyInputFieldEmpty = kVK_MAX;
 }
 
 - (void)keyDown:(NSEvent *)event {
-    static const NSUInteger IGNORE = NSAlternateKeyMask | NSCommandKeyMask;
+    static const NSUInteger IGNORE = NSEventModifierFlagOption | NSEventModifierFlagCommand;
     if (!event.isARepeat) {
         if ((event.modifierFlags & IGNORE) && event.keyCode == kVK_Delete) {
             // Allow Alt/Command+Delete to clear the field.
@@ -266,7 +268,7 @@ static BOOL isValidKeyCode(long code) {
     warning.hidden = YES;
     char *error = NULL;
     const char *s = field.stringValue.UTF8String;
-    short code = (short)strtol(s, &error, 16);
+    CGKeyCode code = (CGKeyCode)strtol(s, &error, 16);
     
     if (!*error && isValidKeyCode(code) && field.stringValue.length) {
         self.keyCode = code;
@@ -278,7 +280,7 @@ static BOOL isValidKeyCode(long code) {
 
 - (void)mouseDown:(NSEvent *)theEvent {
     if (self.isEnabled) {
-        if (theEvent.modifierFlags & NSCommandKeyMask) {
+        if (theEvent.modifierFlags & NSEventModifierFlagCommand) {
             field.editable = YES;
             field.selectable = YES;
             field.stringValue = @"";
@@ -303,7 +305,7 @@ static BOOL isValidKeyCode(long code) {
     // for modifier key up - so detect it by checking to see if any
     // modifiers are still down.
     if (!field.isEditable
-        && !(theEvent.modifierFlags & NSDeviceIndependentModifierFlagsMask)) {
+        && !(theEvent.modifierFlags & NSEventModifierFlagDeviceIndependentFlagsMask)) {
         self.keyCode = theEvent.keyCode;
         [self.delegate keyInputField:self didChangeKey:_keyCode];
     }

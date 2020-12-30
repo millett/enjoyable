@@ -6,6 +6,8 @@
 //
 //
 
+#import <Cocoa/Cocoa.h>
+
 @class NJMapping;
 @protocol NJMappingsViewControllerDelegate;
 
@@ -43,7 +45,7 @@
 
 - (NSInteger)numberOfMappings:(NJMappingsViewController *)dvc;
 - (NJMapping *)mappingsViewController:(NJMappingsViewController *)dvc
-                      mappingForIndex:(NSUInteger)idx;
+                      mappingForIndex:(NSInteger)idx;
 
 
 - (void)mappingsViewController:(NJMappingsViewController *)mvc

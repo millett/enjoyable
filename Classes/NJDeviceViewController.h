@@ -6,6 +6,8 @@
 //
 //
 
+#import <Cocoa/Cocoa.h>
+
 @class NJDevice;
 @class NJInput;
 @class NJInputPathElement;

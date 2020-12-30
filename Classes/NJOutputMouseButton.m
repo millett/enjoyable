@@ -5,6 +5,8 @@
 //  Created by Yifeng Huang on 7/27/12.
 //
 
+#import <Cocoa/Cocoa.h>
+
 #import "NJOutputMouseButton.h"
 
 @implementation NJOutputMouseButton {
@@ -18,8 +20,9 @@
     if (s_doubleClickThreshold == 0) {
         s_doubleClickThreshold = [[NSUserDefaults.standardUserDefaults
                                  objectForKey:@"com.apple.mouse.doubleClickThreshold"] floatValue];
-        if (s_doubleClickThreshold <= 0)
+        if (s_doubleClickThreshold <= 0) {
             s_doubleClickThreshold = 1.0;
+        }
     }
     return s_doubleClickThreshold;
 }
@@ -38,7 +41,7 @@
 
 + (NJOutput *)outputWithSerialization:(NSDictionary *)serialization {
     NJOutputMouseButton *output = [[NJOutputMouseButton alloc] init];
-    output.button = [serialization[@"button"] intValue];
+    output.button = [serialization[@"button"] unsignedIntValue];
     return output;
 }
 

@@ -11,7 +11,7 @@
 @implementation NSOutlineView (ItemAccessors)
 
 - (void)selectItem:(id)item {
-    NSInteger row = [self rowForItem:item];
+    NSUInteger row = (NSUInteger)[self rowForItem:item];
     if (row >= 0) {
         [self selectRowIndexes:[[NSIndexSet alloc] initWithIndex:row]
           byExtendingSelection:NO];

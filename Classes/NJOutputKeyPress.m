@@ -24,7 +24,7 @@
 + (NJOutput *)outputWithSerialization:(NSDictionary *)serialization {
 	NSLog(@"keypress outputw");
     NJOutputKeyPress *output = [[NJOutputKeyPress alloc] init];
-    output.keyCode = [serialization[@"key"] shortValue];
+    output.keyCode = [serialization[@"key"] unsignedShortValue];
     return output;
 }
 

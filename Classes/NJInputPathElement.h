@@ -5,6 +5,9 @@
 //  Created by Joe Wreschnig on 3/13/13.
 //
 //
+
+#import <Foundation/Foundation.h>
+
 @interface NJInputPathElement : NSObject
 
 - (id)initWithName:(NSString *)name
